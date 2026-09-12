@@ -1,13 +1,14 @@
 # GNOME Extensions submission plan
 
-Version **0.2.1** with the compositor fix is installed locally. On 13 September
-2026, WhiteHades confirmed that the reported fullscreen hover problem was resolved
-after loading this build. Publication is authorized and release preparation is
-complete; the GNOME upload still requires acceptance of the site's submission
-terms. Regression, lifecycle, package, and 24 preferences-layout checks pass.
-Four private GNOME activation rounds pass 22 checks each, followed by clean
-teardown. The Shexli submission checker reports no errors or warnings. Public
-availability requires GNOME review.
+Version **0.2.1** is ready to publish. I tested the fix on 13 September 2026 and
+confirmed that the bar now stays visible over fullscreen apps on my Fedora 44
+system with GNOME 50.4.
+
+The automated tests passed, including 24 settings layouts and four GNOME test
+sessions with 22 checks each. The extension also shut down cleanly after every
+session. The Shexli submission checker found no errors or warnings.
+
+GNOME must review the extension before it is available on its website.
 
 ## Acceptance test on the actual desktop
 

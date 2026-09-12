@@ -1,10 +1,11 @@
 # Attribution and license
 
-This is WhiteHades's modified fork of **Hide Top Bar**, based on
+I forked **Hide Top Bar** from
 https://github.com/tuxor1337/hidetopbar at commit
 aa7d51e (full revision recorded in Git history).
 
 Original authors and copyright holders:
+
 - Thomas Vogt (tuxor1337), copyright 2013–2026.
 - Mathieu Lutfy, copyright 2012–2013.
 - Philip Witte, copyright 2012.

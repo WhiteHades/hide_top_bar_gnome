@@ -17,7 +17,7 @@ git log --oneline HEAD..upstream/main
 git diff HEAD...upstream/main
 ```
 
-`origin` is WhiteHades's repository. `upstream` is the original GitHub mirror.
+`origin` is my fork. `upstream` is the original GitHub mirror.
 Review relevant upstream commits before merging or cherry-picking them. Preserve
 the fork UUID, settings schema, URL, and source credits. Do not overwrite local
 changes or force-push over somebody else's work.
@@ -134,5 +134,5 @@ mean the locally installed extension failed to load.
 
 ## Publication
 
-Follow [PUBLISHING.md](PUBLISHING.md). Complete the desktop checks and obtain the maintainer's publication approval
-before submitting another release. Keep the same UUID for future releases.
+Follow [PUBLISHING.md](PUBLISHING.md) and test on the desktop before submitting
+a release. Keep the same UUID for future releases.

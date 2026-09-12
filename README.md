@@ -8,11 +8,11 @@ Current version: **0.2.1**. Supports GNOME 50, tested on Fedora 44 with GNOME 50
 
 ## Why this fork exists
 
-This fork addresses hover flicker and cropped settings on GNOME 50. It keeps
-GNOME rendering the bar over apps that fill the display, even after the slide
-animation ends. A short hide delay handles brief pointer exits, interrupted
-slides reverse smoothly, and native hot corners keep working during animation.
-Settings wrap and scroll to fit narrow windows and larger text.
+I made this fork because the bar flickered and the settings window cut off
+controls on GNOME 50. The bar now stays visible over apps that fill the screen,
+even after its animation ends. It handles quick pointer movements and keeps the
+Activities corner working while the bar slides. Settings wrap and scroll to fit
+narrow windows and larger text.
 
 ## Install
 
