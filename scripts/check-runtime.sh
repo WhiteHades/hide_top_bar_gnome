@@ -82,7 +82,7 @@ def call(method, signature):
 
 with (root / 'shell.log').open('w') as log:
     shell = subprocess.Popen([
-        'gnome-shell', '--headless', '--wayland', '--no-x11',
+        'gnome-shell', '--headless', '--wayland',
         '--virtual-monitor', '1920x1200', '--wayland-display', 'htb-runtime-test',
     ], stdout=log, stderr=subprocess.STDOUT)
     try:
@@ -113,7 +113,7 @@ with (root / 'shell.log').open('w') as log:
                 time.sleep(0.1)
             raise RuntimeError(f'{phase}: timed out after {timeout}s: {last}')
 
-        def wait_result(kind, run, timeout=60):
+        def wait_result(kind, run, timeout=120):
             path = root / f'runtime-{kind}-{run}.json'
             deadline = time.monotonic() + timeout
             while time.monotonic() < deadline:

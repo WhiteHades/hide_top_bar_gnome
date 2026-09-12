@@ -60,6 +60,7 @@ export class PanelVisibilityManager {
         this._animationSerial = 0;
         this._hideTimeoutId = 0;
         this._shortcutTimeout = null;
+        this._suppressedHotCorner = null;
 
         this._desktopIconsUsableArea = (
             new DesktopIconsIntegration.DesktopIconsUsableAreaClass()
@@ -76,7 +77,7 @@ export class PanelVisibilityManager {
         this._oldEase = MessageTray._bannerBin.ease;
         MessageTray._bannerBin.ease = (
             function(params) {
-                if (params.hasOwnProperty("y") && PanelBox.visible && PanelBox.y >= this._base_y) {
+                if (params.hasOwnProperty("y") && PanelBox.visible && PanelBox.y + PanelBox.translation_y >= this._base_y) {
                     params.y += PanelBox.height;
                 }
                 this._oldEase.apply(MessageTray._bannerBin, arguments);
@@ -106,7 +107,6 @@ export class PanelVisibilityManager {
         if(this._destroyed || this._preventHide) return;
         if (this._targetVisible === false) return;
 
-        const delta_y = -PanelBox.height;
         let mouse = global.get_pointer();
         if(trigger == "mouse-left" && this._isHovering(...mouse)) return;
         this._cancelHideTimeout();
@@ -119,9 +119,11 @@ export class PanelVisibilityManager {
             this._animationActive = false;
         }
 
+        // A visual translation leaves native panel allocation and corner
+        // barriers intact throughout the slide.
         this._animationActive = true;
         PanelBox.ease({
-            y: this._base_y + delta_y,
+            translation_y: -PanelBox.height,
             duration: animationTime * 1000,
             mode: Clutter.AnimationMode.EASE_OUT_QUAD,
             onComplete: () => {
@@ -161,15 +163,15 @@ export class PanelVisibilityManager {
         if(trigger == "destroy"
            || (
                trigger == "showing-overview"
-               && global.get_pointer()[1] < PanelBox.height
+               && global.get_pointer()[1] < this._base_y + PanelBox.height
                && this._settings.get_boolean('hot-corner')
               )
           ) {
-            PanelBox.y = this._base_y;
+            PanelBox.translation_y = 0;
         } else {
             this._animationActive = true;
             PanelBox.ease({
-                y: this._base_y,
+                translation_y: 0,
                 duration: animationTime * 1000,
                 mode: Clutter.AnimationMode.EASE_OUT_QUAD,
                 onComplete: () => {
@@ -342,7 +344,11 @@ export class PanelVisibilityManager {
         );
         this._panelPressure.connect(
             'trigger',
-            (barrier) => {
+            () => {
+                // Input can be queued while the pointer has already left.
+                // A stale edge hit must not reopen a panel that is hiding.
+                if (this._destroyed || !this._isHovering(...global.get_pointer()))
+                    return;
                 if (
                     Main.layoutManager.primaryMonitor?.inFullscreen
                     && !this._settings.get_boolean(
@@ -378,22 +384,27 @@ export class PanelVisibilityManager {
         this._desktopIconsUsableArea.setMargins(-1, PanelBox.height, 0, 0, 0);
     }
 
-    _updateHotCorner(panel_hidden) {
-        let HotCorner = null;
-        for(let i = 0; i < Main.layoutManager.hotCorners.length; i++){
-          let hc = Main.layoutManager.hotCorners[i];
-          if(hc){
-            HotCorner = hc;
-            break;
-          }
+    _updateHotCorner(panelHidden) {
+        const corners = Main.layoutManager.hotCorners;
+        const corner = corners[Main.layoutManager.primaryIndex];
+        const previous = this._suppressedHotCorner;
+        if (previous && previous !== corner) {
+            // A monitor change can replace or destroy the old corner.
+            if (corners.includes(previous))
+                previous.setBarrierSize(PanelBox.height);
+            this._suppressedHotCorner = null;
         }
-        if(HotCorner){
-          if(!panel_hidden || this._settings.get_boolean('hot-corner')) {
-              HotCorner.setBarrierSize(PanelBox.height);
-          } else {
-              HotCorner.setBarrierSize(0);
-          }
+        if (!corner) return; // Respect GNOME's system hot-corner switch.
+
+        if (panelHidden && !this._settings.get_boolean('hot-corner')) {
+            corner.setBarrierSize(0);
+            this._suppressedHotCorner = corner;
+        } else if (this._suppressedHotCorner === corner) {
+            corner.setBarrierSize(PanelBox.height);
+            this._suppressedHotCorner = null;
         }
+        // Leave an enabled native corner untouched. Recreating its barriers
+        // loses the pointer pressure that was already opening Activities.
     }
 
     _updateSettingsHotCorner() {
@@ -405,7 +416,7 @@ export class PanelVisibilityManager {
         this._updateSearchEntryPadding();
         this._updateSettingsMouseSensitive();
         if (this._targetVisible === false && !this._animationActive)
-            PanelBox.y = this._base_y - PanelBox.height;
+            PanelBox.translation_y = -PanelBox.height;
     }
 
     _updateSettingsMouseSensitive() {
@@ -499,6 +510,16 @@ export class PanelVisibilityManager {
                 PanelBox,
                 'notify::height',
                 this._updatePanelGeometry.bind(this)
+            ],
+            [
+                PanelBox,
+                'notify::allocation',
+                this._updateSettingsHotCorner.bind(this)
+            ],
+            [
+                Main.layoutManager,
+                'hot-corners-changed',
+                this._updateSettingsHotCorner.bind(this)
             ],
             [
                 Main.layoutManager,

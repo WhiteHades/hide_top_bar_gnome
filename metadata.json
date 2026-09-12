@@ -5,8 +5,8 @@
   "uuid": "hide-top-bar@whitehades.github.io",
   "name": "Hide Top Bar (WhiteHades)",
   "settings-schema": "org.gnome.shell.extensions.hidetopbar-whitehades",
-  "description": "Hide the GNOME top bar until you move the pointer to the top edge. It stays visible while you use the panel or its menus, including over fullscreen apps.\n\nThis fork exists to fix hover flicker and cropped settings encountered on GNOME 50. Compared with the upstream version it was based on, it adds a cancellable hide delay, steadier animation reversals, fullscreen reveal fixes, and native settings pages that wrap and scroll. It also fixes callback cleanup and monitor changes, with regression and real GNOME tests.\n\nBased on Hide Top Bar by Thomas Vogt, Mathieu Lutfy, Philip Witte, and contributors. Independently maintained by WhiteHades for GNOME 50.",
+  "description": "Hide the GNOME top bar until you move the pointer to the top edge. It stays visible while you use the panel or its menus, including over fullscreen apps.\n\nThis fork exists to fix hover flicker and cropped settings encountered on GNOME 50. Compared with the upstream version it was based on, it adds a cancellable hide delay, steadier animation reversals, fullscreen reveal fixes, and native settings pages that wrap and scroll. The native Activities hot corner remains responsive while the panel slides. It also fixes callback cleanup and monitor changes, with regression and real GNOME tests.\n\nBased on Hide Top Bar by Thomas Vogt, Mathieu Lutfy, Philip Witte, and contributors. Independently maintained by WhiteHades for GNOME 50.",
   "url": "https://github.com/WhiteHades/hide_top_bar_gnome",
   "gettext-domain": "hidetopbar@mathieu.bidon.ca",
-  "version-name": "0.2"
+  "version-name": "0.2.1"
 }

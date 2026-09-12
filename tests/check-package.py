@@ -23,9 +23,9 @@ with ZipFile(f'dist/{UUID}.shell-extension.zip') as archive:
     assert metadata['uuid'] == UUID
     assert metadata['name'] == 'Hide Top Bar (WhiteHades)'
     assert metadata['url'] == 'https://github.com/WhiteHades/hide_top_bar_gnome'
-    assert metadata['version-name'] == '0.2'
+    assert metadata['version-name'] == '0.2.1'
     assert 'version' not in metadata, 'Let GNOME Extensions assign its submission counter'
-    assert Path('CHANGELOG.md').read_text().splitlines()[2] == '## 0.2'
+    assert Path('CHANGELOG.md').read_text().splitlines()[2] == '## 0.2.1'
     assert metadata['shell-version'], 'Declare tested Shell versions'
     schema = ET.fromstring(archive.read('schemas/org.gnome.shell.extensions.hidetopbar.gschema.xml'))
     assert schema.find('schema').get('id') == metadata['settings-schema']

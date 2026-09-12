@@ -3,11 +3,13 @@
 import GLib from 'gi://GLib';
 import Clutter from 'gi://Clutter';
 import Gio from 'gi://Gio';
+import Meta from 'gi://Meta';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
 const panel = Main.layoutManager.panelBox;
 let runNumber = 0;
 const runs = new WeakMap();
+const panelY = () => panel.y + panel.translation_y;
 
 function assert(condition, message) {
     if (!condition)
@@ -30,7 +32,7 @@ async function until(predicate, message, timeout = 2500) {
             return;
         await delay(10);
     }
-    throw new Error(`Timeout: ${message}; panel y=${panel.y}, visible=${panel.visible}`);
+    throw new Error(`Timeout: ${message}; panel y=${panelY()}, visible=${panel.visible}`);
 }
 
 function record(kind, id, value) {
@@ -67,7 +69,6 @@ export async function run(manager) {
             virtualPointer = seat.create_virtual_device(Clutter.InputDeviceType.POINTER_DEVICE);
             const x = Math.round(panel.x + panel.width / 2);
             const outsideY = Math.round(manager._base_y + panel.height + 120);
-            manager._settings.set_int('pressure-threshold', 50);
             manager._settings.set_int('pressure-timeout', 1000);
             const nativeHover = async context => {
                 virtualPointer.notify_absolute_motion(GLib.get_monotonic_time(), x, outsideY);
@@ -80,45 +81,111 @@ export async function run(manager) {
                     await delay(15);
                 }
                 await until(() => panel.visible && panel.get_paint_visibility() &&
-                    !manager._animationActive && Math.abs(panel.y - manager._base_y) < 0.5,
+                    !manager._animationActive && Math.abs(panelY() - manager._base_y) < 0.5,
                 `${context}: real virtual-pointer pressure barrier reveals the panel`);
                 virtualPointer.notify_absolute_motion(GLib.get_monotonic_time(), x,
                     Math.round(manager._base_y + panel.height / 2));
                 const end = GLib.get_monotonic_time() + 350000;
                 while (GLib.get_monotonic_time() < end) {
                     assert(panel.visible && panel.get_paint_visibility() &&
-                        Math.abs(panel.y - manager._base_y) < 0.5,
+                        Math.abs(panelY() - manager._base_y) < 0.5,
                     `${context}: native hover did not hold the complete panel visible`);
                     await delay(20);
                 }
                 virtualPointer.notify_absolute_motion(GLib.get_monotonic_time(), x, outsideY);
+                await delay(40);
+                virtualPointer.notify_absolute_motion(GLib.get_monotonic_time(), x,
+                    Math.round(manager._base_y + panel.height / 2));
+                await delay(200);
+                assert(manager._targetVisible && panel.visible &&
+                    Math.abs(panelY() - manager._base_y) < 0.5,
+                `${context}: quick native exit and reentry reversed the panel`);
+                virtualPointer.notify_absolute_motion(GLib.get_monotonic_time(), x, outsideY);
                 await until(() => !panel.visible && !manager._animationActive,
                     `${context}: real virtual-pointer exit hides the panel`);
+                await delay(250);
+                assert(!panel.visible && !manager._targetVisible,
+                    `${context}: panel appeared again after native exit`);
                 checks.push(`native edge pressure, complete hover visibility and exit: ${context}`);
             };
-            await nativeHover('desktop');
-            for (const mode of ['windowed', 'maximized', 'fullscreen']) {
-                const title = `HTB Runtime ${mode}`;
-                const testWindow = () => global.get_window_actors()
-                    .map(actor => actor.meta_window).find(window => window.get_title() === title);
-                testClient = Gio.Subprocess.new(['gjs', '-m',
-                    `${GLib.getenv('CHECK_ROOT')}/runtime-window.js`, mode], Gio.SubprocessFlags.NONE);
-                await until(() => {
-                    const window = testWindow();
-                    if (!window)
-                        return false;
-                    if (mode === 'fullscreen')
-                        return window.is_fullscreen() && Main.layoutManager.primaryMonitor.inFullscreen;
-                    if (mode === 'maximized')
-                        return window.is_maximized();
-                    return !window.is_fullscreen() && !window.is_maximized();
-                }, `real ${mode} GTK window and compositor state`, 10000);
-                await nativeHover(mode);
-                testClient.force_exit();
-                testClient = null;
-                await until(() => !testWindow(), `${mode} test window closes`);
-                await until(() => !Main.layoutManager.primaryMonitor.inFullscreen,
-                    'compositor leaves fullscreen after test client exits');
+            manager._settings.set_int('pressure-threshold', 0);
+            await nativeHover('desktop, pressure 0');
+
+            // Sliding the actor's allocation used to rebuild GNOME's hot-corner
+            // barriers every frame, throwing away pressure until the slide ended.
+            Gio.Settings.new('org.gnome.desktop.interface').set_boolean('enable-hot-corners', true);
+            manager._settings.set_boolean('hot-corner', true);
+            await until(() => Main.layoutManager.hotCorners[Main.layoutManager.primaryIndex],
+                'native primary hot corner exists');
+            const corner = Main.layoutManager.hotCorners[Main.layoutManager.primaryIndex];
+            const horizontal = corner._horizontalBarrier;
+            const vertical = corner._verticalBarrier;
+            assert(horizontal && vertical, 'native corner pressure barriers exist');
+            manager._settings.set_double('animation-time-autohide', 1.5);
+            virtualPointer.notify_absolute_motion(GLib.get_monotonic_time(), x, manager._base_y);
+            manager.show(1.5, 'runtime-hot-corner-reveal');
+            await delay(100);
+            assert(manager._animationActive, 'hot-corner test needs a real panel animation');
+            assert(corner._horizontalBarrier === horizontal && corner._verticalBarrier === vertical,
+                'show animation rebuilt the native hot-corner barriers');
+            virtualPointer.notify_absolute_motion(GLib.get_monotonic_time(),
+                Main.layoutManager.primaryMonitor.x + 20, manager._base_y + 20);
+            const cornerStart = GLib.get_monotonic_time();
+            for (let motion = 0; motion < 20 && !Main.overview.visible; motion++) {
+                virtualPointer.notify_relative_motion(GLib.get_monotonic_time(), -20, -20);
+                await delay(20);
+            }
+            await until(() => Main.overview.visible, 'native corner opens overview during reveal', 500);
+            assert(GLib.get_monotonic_time() - cornerStart < 1000000,
+                'native hot corner waited for the 1.5 second panel slide');
+            virtualPointer.notify_absolute_motion(GLib.get_monotonic_time(), x, outsideY);
+            Main.overview.hide();
+            await until(() => !Main.overview.visible && !Main.overview.animationInProgress,
+                'leave overview after native hot-corner test');
+            await until(() => !manager._animationActive && !panel.visible,
+                'panel hidden after native overview test');
+            assert(corner._horizontalBarrier === horizontal && corner._verticalBarrier === vertical,
+                'hide animation rebuilt the native hot-corner barriers');
+            manager._settings.set_double('animation-time-autohide', 0.25);
+            checks.push('native hot-corner barriers survive slides and open overview before reveal completes');
+
+            for (const backend of ['wayland', 'x11']) {
+                for (const mode of ['windowed', 'maximized', 'fullscreen']) {
+                    const title = `HTB Runtime ${backend} ${mode}`;
+                    const testWindow = () => global.get_window_actors()
+                        .map(actor => actor.meta_window).find(window => window.get_title() === title);
+                    const launcher = new Gio.SubprocessLauncher({flags: Gio.SubprocessFlags.NONE});
+                    launcher.setenv('GDK_BACKEND', backend, true);
+                    if (backend === 'x11') {
+                        const display = GLib.getenv('DISPLAY');
+                        assert(display, 'private compositor did not expose an XWayland DISPLAY');
+                        launcher.setenv('DISPLAY', display, true);
+                    }
+                    testClient = launcher.spawnv(['gjs', '-m',
+                        `${GLib.getenv('CHECK_ROOT')}/runtime-window.js`, mode, backend]);
+                    await until(() => {
+                        const window = testWindow();
+                        if (!window)
+                            return false;
+                        if (mode === 'fullscreen')
+                            return window.is_fullscreen() && Main.layoutManager.primaryMonitor.inFullscreen;
+                        if (mode === 'maximized')
+                            return window.is_maximized();
+                        return !window.is_fullscreen() && !window.is_maximized();
+                    }, `real ${backend} ${mode} GTK window and compositor state`, 10000);
+                    assert(testWindow().get_client_type() ===
+                        (backend === 'x11' ? Meta.WindowClientType.X11 : Meta.WindowClientType.WAYLAND),
+                    `${backend} test client connected through the wrong display backend`);
+                    for (const threshold of [0, 50]) {
+                        manager._settings.set_int('pressure-threshold', threshold);
+                        await nativeHover(`${backend} ${mode}, pressure ${threshold}`);
+                    }
+                    testClient.force_exit();
+                    testClient = null;
+                    await until(() => !testWindow(), `${mode} test window closes`);
+                    await until(() => !Main.layoutManager.primaryMonitor.inFullscreen,
+                        'compositor leaves fullscreen after test client exits');
+                }
             }
         } else {
             checks.push('native pointer test unavailable: compositor lacks virtual-device API');
@@ -142,10 +209,10 @@ export async function run(manager) {
             pointer = [Math.round(panel.x + panel.width / 2),
                 Math.round(manager._base_y + panel.height + 120), 0];
         };
-        const visible = () => panel.visible && Math.abs(panel.y - manager._base_y) < 0.5 &&
+        const visible = () => panel.visible && Math.abs(panelY() - manager._base_y) < 0.5 &&
             manager._targetVisible === true && !manager._animationActive;
         const hidden = () => !panel.visible &&
-            panel.y <= manager._base_y - panel.height + 0.5 &&
+            panelY() <= manager._base_y - panel.height + 0.5 &&
             manager._targetVisible === false && !manager._animationActive;
         const hover = () => manager._handlePointer(pointer[0], pointer[1]);
         const stableVisible = async (milliseconds, label) => {
@@ -164,6 +231,10 @@ export async function run(manager) {
         outside();
         manager.hide(0, 'runtime-initial-hide');
         await until(hidden, 'initial hidden panel');
+        manager._panelPressure.emit('trigger');
+        await delay(300);
+        assert(hidden(), 'an edge hit delivered after the pointer left revealed the panel');
+        checks.push('stale pressure hits cannot reveal the panel after pointer exit');
         await reveal();
         await stableVisible(300, 'ordinary hover');
         checks.push('real panel remains fully visible during hover');
@@ -179,8 +250,8 @@ export async function run(manager) {
 
         outside();
         hover();
-        await until(() => panel.y < manager._base_y - 0.5 &&
-            panel.y > manager._base_y - panel.height + 0.5,
+        await until(() => panelY() < manager._base_y - 0.5 &&
+            panelY() > manager._base_y - panel.height + 0.5,
         'actual intermediate Clutter hide-animation frame');
         inside();
         hover();
@@ -225,8 +296,8 @@ export async function run(manager) {
         await until(hidden, 'prepare pending-animation disable');
         inside();
         manager.show(1, 'mouse-enter');
-        await until(() => manager._animationActive && panel.y > manager._base_y - panel.height + 0.5 &&
-            panel.y < manager._base_y - 0.5, 'real show animation active before disable');
+        await until(() => manager._animationActive && panelY() > manager._base_y - panel.height + 0.5 &&
+            panelY() < manager._base_y - 0.5, 'real show animation active before disable');
         record('result', id, {ok: true, id, checks, pendingAnimation: true});
     } catch (error) {
         record('result', id, {ok: false, id, checks, error: `${error.message}\n${error.stack}`});
@@ -250,7 +321,8 @@ export async function onDisable(manager) {
         assert(!manager._pointerListener, 'pointer listener survived disable');
         assert(!manager._hideTimeoutId, 'pending hide survived disable');
         assert(!panel.get_transition('y'), 'panel y transition survived disable');
-        const restored = () => panel.visible && Math.abs(panel.y - manager._base_y) < 0.5;
+        assert(!panel.get_transition('translation-y'), 'panel translation transition survived disable');
+        const restored = () => panel.visible && Math.abs(panelY() - manager._base_y) < 0.5;
         assert(restored(), 'native panel was not restored on disable');
         await delay(1200);
         assert(restored(), 'a delayed callback modified the native panel after disable');

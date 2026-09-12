@@ -1,5 +1,14 @@
 # Changes
 
+## 0.2.1
+
+- Keep native Activities corner detection active while the bar slides.
+- Animate the visual offset without rebuilding GNOME corner barriers each frame.
+- Respect the system hot-corner switch and restore the right corner after monitor changes.
+- Ignore queued edge hits once the pointer has left the panel area.
+- Test Wayland and XWayland windows, including maximized and fullscreen apps,
+  with zero and nonzero edge pressure.
+
 ## 0.2
 
 - Keep the revealed panel steady during brief pointer exits and rapid re-entry.
