@@ -7,13 +7,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: sudo apt-get update && sudo apt-get install -y gjs libglib2.0-bin gettext python3
+      - run: sudo apt-get update && sudo apt-get install -y gjs libglib2.0-bin gettext python3 gir1.2-adw-1 xvfb xauth
       - run: gjs -m tests/run.js
       - run: bash scripts/build.sh
       - run: python3 tests/check-package.py
+      - run: bash scripts/check-prefs.sh
       - run: bash -n scripts/*.sh
       - run: git diff --check
       - uses: actions/upload-artifact@v4
         with:
           name: hide-top-bar-whitehades
           path: dist/*.zip
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: preferences-diagnostics
+          path: /tmp/whitehades-prefs-check.*/
