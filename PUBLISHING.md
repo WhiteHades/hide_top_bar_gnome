@@ -12,7 +12,9 @@ as enabled and the original Hide Top Bar as disabled.
 - One true fullscreen window (for example F11 in a browser): hover reveals the
   whole panel; moving away hides it without exiting fullscreen.
 - Open Quick Settings/calendar: the panel remains visible while the menu is open.
-- Repeated quick hover in/out: no stuck, invisible, or partially revealed panel.
+- Repeated quick hover in/out: no down/up/down flicker, stuck state, or clipped panel.
+- Leave the panel and keep the pointer outside: it hides once and stays hidden.
+- Preferences: all controls fit, including with larger text and a narrow window.
 - Activities overview: panel behaves according to Show in Overview preference.
 - Dash to Dock still behaves correctly.
 - Disable and re-enable: native panel is restored while disabled; no duplicate callbacks.
@@ -27,7 +29,7 @@ and exact steps for any failure. Do not claim every issue is fixed based only on
 2. Ensure README, ATTRIBUTION.md, COPYING.txt and source headers retain upstream credit.
 3. Review the runtime code and cleanup paths. Existing desktop-icons integration
    interacts with other extensions and remains subject to reviewer discretion.
-4. Run `gjs -m tests/run.js`, `bash scripts/check-runtime.sh`, and `git diff --check`.
+4. Run all checks in [MAINTENANCE.md](MAINTENANCE.md#test-and-package).
 5. Run `bash scripts/build.sh` and review the contents of the ZIP under `dist/`.
 6. Capture a screenshot showing the fork and accurately describe its differences.
 7. Sign in to https://extensions.gnome.org/ and upload the ZIP via its submission flow.
