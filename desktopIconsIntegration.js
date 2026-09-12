@@ -73,6 +73,7 @@ export class DesktopIconsUsableAreaClass {
         this._UUID = Me.uuid;
         this._extensionManager = Main.extensionManager;
         this._timedMarginsID = 0;
+        this._destroyed = false;
         this._margins = {};
         this._emID = this._extensionManager.connect(
             'extension-state-changed', (_obj, extension) => {
@@ -108,6 +109,7 @@ export class DesktopIconsUsableAreaClass {
      * @param {int} right Right margin in pixels
      */
     setMargins(monitor, top, bottom, left, right) {
+        if (this._destroyed) return;
         this._margins[monitor] = {
             'top': top,
             'bottom': bottom,
@@ -122,6 +124,7 @@ export class DesktopIconsUsableAreaClass {
      * monitors margins with setMargins().
      */
     resetMargins() {
+        if (this._destroyed) return;
         this._margins = {};
         this._changedMargins();
     }
@@ -130,6 +133,8 @@ export class DesktopIconsUsableAreaClass {
      * Disconnects all the signals and removes the margins.
      */
     destroy() {
+        if (this._destroyed) return;
+        this._destroyed = true;
         if (this._emID) {
             this._extensionManager.disconnect(this._emID);
             this._emID = 0;
@@ -139,10 +144,18 @@ export class DesktopIconsUsableAreaClass {
             this._timedMarginsID = 0;
         }
         this._margins = null;
-        this._changedMargins();
+        // Clear our contribution before disable returns; no delayed callback
+        // may retain the extension after teardown.
+        try {
+            this._sendMarginsToAll();
+        } finally {
+            this._extensionManager = null;
+            this._UUID = null;
+        }
     }
 
     _changedMargins() {
+        if (this._destroyed) return;
         if (this._timedMarginsID) {
             GLib.source_remove(this._timedMarginsID);
         }

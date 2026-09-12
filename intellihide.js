@@ -83,6 +83,7 @@ export class Intellihide extends Signals.EventEmitter {
         this._topApp = null;
 
         this._isEnabled = false;
+        this._destroyed = false;
         this._status = OverlapStatus.UNDEFINED;
         this._targetBox = null;
 
@@ -129,6 +130,8 @@ export class Intellihide extends Signals.EventEmitter {
     }
 
     destroy() {
+        if (this._destroyed) return;
+        this._destroyed = true;
         // Disconnect global signals
         this._signalsHandler.destroy();
 
@@ -137,6 +140,7 @@ export class Intellihide extends Signals.EventEmitter {
     }
 
     enable() {
+        if (this._destroyed) return;
         this._isEnabled = true;
         this._status = OverlapStatus.UNDEFINED;
         global.get_window_actors().forEach(function(wa) {
@@ -157,27 +161,39 @@ export class Intellihide extends Signals.EventEmitter {
             GLib.source_remove(this._checkOverlapTimeoutId);
             this._checkOverlapTimeoutId = 0;
         }
+        this._checkOverlapTimeoutContinue = false;
+        this._status = OverlapStatus.UNDEFINED;
+        this._focusApp = null;
+        this._topApp = null;
     }
 
     _windowCreated(display, metaWindow) {
-        this._addWindowSignals(metaWindow.get_compositor_private());
+        if (!this._isEnabled) return;
+        this._addWindowSignals(metaWindow?.get_compositor_private());
     }
 
     _addWindowSignals(wa) {
-        if (!this._handledWindow(wa))
+        if (!this._isEnabled || this._trackedWindows.has(wa) || !this._handledWindow(wa))
             return;
-        let signalId = wa.connect(
+        const allocation = wa.connect(
             'notify::allocation', this._checkOverlap.bind(this)
         );
-        this._trackedWindows.set(wa, signalId);
-        wa.connect('destroy', this._removeWindowSignals.bind(this));
+        const destroy = wa.connect('destroy', this._removeWindowSignals.bind(this));
+        this._trackedWindows.set(wa, {allocation, destroy});
     }
 
     _removeWindowSignals(wa) {
-        if (this._trackedWindows.get(wa)) {
-           wa.disconnect(this._trackedWindows.get(wa));
-           this._trackedWindows.delete(wa);
-        }
+        const handlers = this._trackedWindows.get(wa);
+        if (!handlers) return;
+        this._trackedWindows.delete(wa);
+        wa.disconnect(handlers.allocation);
+        wa.disconnect(handlers.destroy);
+    }
+
+    setMonitorIndex(monitorIndex) {
+        if (this._monitorIndex === monitorIndex) return;
+        this._monitorIndex = monitorIndex;
+        this.forceUpdate();
     }
 
     updateTargetBox(box) {
@@ -206,9 +222,15 @@ export class Intellihide extends Signals.EventEmitter {
 
         this._doCheckOverlap();
 
+        // A status-changed listener may disable the extension synchronously.
+        if (!this._isEnabled) return;
         this._checkOverlapTimeoutId = GLib.timeout_add(
             GLib.PRIORITY_DEFAULT, INTELLIHIDE_CHECK_INTERVAL, () => {
             this._doCheckOverlap();
+            if (!this._isEnabled) {
+                this._checkOverlapTimeoutId = 0;
+                return GLib.SOURCE_REMOVE;
+            }
             if (this._checkOverlapTimeoutContinue) {
                 this._checkOverlapTimeoutContinue = false;
                 return GLib.SOURCE_CONTINUE;
@@ -288,14 +310,15 @@ export class Intellihide extends Signals.EventEmitter {
     // Consider all windows visible on the current workspace.
     // Optionally skip windows of other applications
     _intellihideFilterInteresting(wa) {
-        let meta_win = wa.get_meta_window();
         if (!this._handledWindow(wa))
             return false;
+        let meta_win = wa.get_meta_window();
 
         let currentWorkspace = (
             global.workspace_manager.get_active_workspace_index()
         );
         let wksp = meta_win.get_workspace();
+        if (!wksp) return false;
         let wksp_index = wksp.index();
 
         // Depending on the intellihide mode, exclude non-relevent windows
@@ -346,7 +369,7 @@ export class Intellihide extends Signals.EventEmitter {
     // Filter windows by type
     // inspired by Opacify@gnome-shell.localdomain.pl
     _handledWindow(wa) {
-        let metaWindow = wa.get_meta_window();
+        let metaWindow = wa?.get_meta_window();
 
         if (!metaWindow)
             return false;

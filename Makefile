@@ -13,8 +13,9 @@ all:
 
 check: all
 	gjs -m tests/run.js
+	gjs -m tests/lifecycle.js
 	python3 tests/check-package.py
-	bash -n scripts/*.sh
+	for script in scripts/*.sh; do bash -n "$$script"; done
 
 check-runtime:
 	bash scripts/check-runtime.sh
