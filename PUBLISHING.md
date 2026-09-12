@@ -4,7 +4,7 @@ Status: **not submitted**. WhiteHades must test and approve this fork first.
 
 ## Acceptance test on the actual desktop
 
-After logging out and in, verify that Extensions lists **Hide Top Bar — WhiteHades**
+After logging out and in, verify that Extensions lists **Hide Top Bar (WhiteHades)**
 as enabled and the original Hide Top Bar as disabled.
 
 - Desktop with no windows: panel hidden; top-edge hover reveals the entire panel.

@@ -1,4 +1,4 @@
-# Hide Top Bar — WhiteHades
+# Hide Top Bar (WhiteHades)
 
 A personal fork of Hide Top Bar for GNOME Shell 50, with a normally hidden panel
 that appears at the top edge, including over fullscreen applications.
@@ -55,6 +55,11 @@ For a plain native top bar instead, disable both extensions in Extensions.
 
 ## Maintain the fork
 
+Maintenance is manual and on request. This fork does not install a background
+updater, schedule compatibility checks, or automatically change after Fedora/GNOME
+updates. GitHub checks run when commits are pushed or pull requests are opened;
+they do not update your desktop. Ask for a compatibility fix when you need one.
+
 `origin` is your GitHub repository; `upstream` is the original GitHub mirror.
 
 ```bash
@@ -97,3 +102,10 @@ to `shell-version`. Do not disable GNOME's compatibility validation.
 The regression suite uses mocked Shell objects to test animation/hover decisions,
 monitor geometry, and resource disposal. Real compositor interaction must also be
 checked on the desktop; it cannot establish absence of all bugs or performance regressions.
+
+## GNOME Extensions publication
+
+Publication is pending your desktop testing and approval. See [PUBLISHING.md](PUBLISHING.md)
+for the acceptance checklist and submission steps. The listing is not live yet;
+GNOME may log an update lookup as "Not Found" for this private UUID in the meantime.
+That lookup is separate from whether the installed extension is active.

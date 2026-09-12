@@ -3,7 +3,7 @@
     "50"
   ],
   "uuid": "hide-top-bar@whitehades.github.io",
-  "name": "Hide Top Bar \u2014 WhiteHades",
+  "name": "Hide Top Bar (WhiteHades)",
   "settings-schema": "org.gnome.shell.extensions.hidetopbar-whitehades",
   "description": "Hides the top bar, except in overview. However, there is an option to show the panel whenever the mouse pointer approaches the edge of the screen. And if \"intellihide\" is enabled, the panel only hides when a window takes the space.\n\n- Press backspace to remove keyboard shortcut.\n- Log off and on again when there is an error after upgrading.",
   "url": "https://github.com/WhiteHades/hide_top_bar_gnome",
