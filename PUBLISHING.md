@@ -1,7 +1,8 @@
 # GNOME Extensions submission plan
 
-Release **0.2** is approved for submission by WhiteHades. Upload is pending a
-signed-in GNOME Extensions account. Public availability requires GNOME review.
+Version **0.2.1** is installed locally for testing. WhiteHades has authorized
+publication. Submission is pending verification of the reported ChatGPT hover
+flicker after loading this update. Public availability requires GNOME review.
 
 ## Acceptance test on the actual desktop
 
@@ -17,6 +18,11 @@ as enabled and the original Hide Top Bar as disabled.
 - Leave the panel and keep the pointer outside: it hides once and stays hidden.
 - Preferences: all controls fit, including with larger text and a narrow window.
 - Activities overview: panel behaves according to Show in Overview preference.
+- With both GNOME and extension hot corners enabled, approaching the native
+  corner opens Activities during a panel slide without waiting for it to finish.
+- Turn the system hot-corner switch off and on, then repeat.
+- Test ChatGPT with a maximized window and true fullscreen, including slow pointer
+  exit and fast re-entry at several positions along the top edge.
 - Dash to Dock still behaves correctly.
 - Disable and re-enable: native panel is restored while disabled; no duplicate callbacks.
 - If available, test monitor hotplug, a different primary display, and scaling changes.
@@ -48,5 +54,5 @@ installation scripts, tests, credentials, firmware, or Git history.
 Keep the same UUID. Update `version-name`, run the tests, install locally,
 complete the acceptance checks, then upload the new ZIP to the existing GNOME
 Extensions listing. The website assigns its own integer `version`; keep the public
-release label, currently `0.2`, in `version-name`.
+release label, currently `0.2.1`, in `version-name`.
 GitHub pushes alone do not update either the desktop installation or the GNOME listing.

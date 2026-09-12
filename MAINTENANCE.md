@@ -44,8 +44,9 @@ The regression tests cover pointer timing, interrupted animations, open menus,
 Intellihide, and callback cleanup. The preferences test checks every page at
 360 and 720 pixels with three text sizes, plus settings and shortcut editing.
 The native runtime test uses virtual pointer input over normal, maximized, and
-fullscreen GTK windows. It checks reveal, steady hover, exit, menu behavior,
-and teardown across four activation rounds.
+fullscreen GTK windows on Wayland and XWayland, at two edge-pressure thresholds.
+It checks reveal, steady hover, exit, stale input, menus, native hot-corner
+activation during animation, and teardown across four activation rounds.
 
 A private compositor does not reproduce every display driver or interaction with
 other installed extensions. Keep the desktop checks below before publication.
@@ -56,8 +57,8 @@ is copied into the temporary test installation only and never ships in the ZIP.
 
 ## Install and test on the desktop
 
-The current release is 0.2. Set `version-name` in `metadata.json` to the public
-release label and use the same label in the changelog and Git tag, such as `v0.2`.
+The current release is 0.2.1. Set `version-name` in `metadata.json` to the public
+release label and use the same label in the changelog and Git tag, such as `v0.2.1`.
 Use patch releases for fixes and minor releases for new features while developing
 before 1.0. Do not change the release label for documentation-only commits.
 

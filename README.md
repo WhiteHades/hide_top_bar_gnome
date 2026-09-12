@@ -4,15 +4,16 @@ Hide GNOME's top bar until you need it. Move the pointer to the top edge to reve
 it, then move away to hide it. The bar stays visible while you use its menus,
 including over fullscreen apps.
 
-Current release: **0.2**. Supports GNOME 50, tested on Fedora 44 with GNOME 50.4.
+Current version: **0.2.1**. Supports GNOME 50, tested on Fedora 44 with GNOME 50.4.
 
 ## Why this fork exists
 
 The original version we started from flickered during hover on GNOME 50 and
 cropped the settings window. This fork fixes those problems with a cancellable
 hide delay, animation reversals that preserve the panel's position, fullscreen
-reveal fixes, and settings that wrap and scroll. It also cleans up timers and
-window listeners, with tests for hover, menus, monitor changes, and larger text.
+reveal fixes, and settings that wrap and scroll. Native hot corners keep working
+during panel animations. Tests cover Wayland and XWayland windows, pointer
+timing, menus, monitor changes, and larger text.
 
 ## Install
 
@@ -40,6 +41,10 @@ Open the **Extensions** app and choose the settings for **Hide Top Bar (WhiteHad
 You can adjust animations, fullscreen behavior, and keyboard shortcuts there.
 Keep **Intellihide** off if you want the bar hidden whenever you are not using it.
 
+For Activities from the top-left corner, enable **Hot Corner** in GNOME Settings
+and **Keep hot corner sensitive, even in hidden state** in the extension. The
+corner keeps GNOME's normal behavior without waiting for the bar to slide down.
+
 The bar waits 150 ms after the pointer leaves before hiding. Returning during
 that delay keeps it open. Turn the extension off in Extensions to restore the
 normal GNOME top bar.
@@ -58,7 +63,7 @@ Log out and back in afterward. See [maintenance and recovery](MAINTENANCE.md)
 for older releases, troubleshooting, and developer tests, or [changes](CHANGELOG.md)
 for the version history.
 
-Download the package from [GitHub Releases](https://github.com/WhiteHades/hide_top_bar_gnome/releases).
+Release packages appear under [GitHub Releases](https://github.com/WhiteHades/hide_top_bar_gnome/releases).
 GNOME Extensions submission is in progress. [Publication status](PUBLISHING.md).
 
 Based on [Hide Top Bar](https://github.com/tuxor1337/hidetopbar) by Thomas Vogt, Mathieu Lutfy, Philip Witte, and contributors. [Credits and GPL license](ATTRIBUTION.md).
