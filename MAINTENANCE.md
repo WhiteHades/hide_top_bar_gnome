@@ -17,7 +17,7 @@ git log --oneline HEAD..upstream/main
 git diff HEAD...upstream/main
 ```
 
-`origin` is my fork. `upstream` is the original GitHub mirror.
+`origin` points to this fork. `upstream` is the original GitHub mirror.
 Review relevant upstream commits before merging or cherry-picking them. Preserve
 the fork UUID, settings schema, URL, and source credits. Do not overwrite local
 changes or force-push over somebody else's work.

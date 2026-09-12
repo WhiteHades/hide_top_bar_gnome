@@ -1,8 +1,8 @@
 # GNOME Extensions submission plan
 
-Version **0.2.1** is ready to publish. I tested the fix on 13 September 2026 and
-confirmed that the bar now stays visible over fullscreen apps on my Fedora 44
-system with GNOME 50.4.
+Version **0.2.1** is ready to publish. It fixes the bar disappearing over fullscreen
+apps after its animation ends. The fix has passed desktop testing on Fedora 44
+with GNOME 50.4.
 
 The automated tests passed, including 24 settings layouts and four GNOME test
 sessions with 22 checks each. The extension also shut down cleanly after every

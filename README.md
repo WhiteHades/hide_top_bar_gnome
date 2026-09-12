@@ -8,8 +8,8 @@ Current version: **0.2.1**. Supports GNOME 50, tested on Fedora 44 with GNOME 50
 
 ## Why this fork exists
 
-I made this fork because the bar flickered and the settings window cut off
-controls on GNOME 50. The bar now stays visible over apps that fill the screen,
+The bar could flicker and the settings window could cut off controls on GNOME 50.
+This fork keeps the bar visible over apps that fill the screen,
 even after its animation ends. It handles quick pointer movements and keeps the
 Activities corner working while the bar slides. Settings wrap and scroll to fit
 narrow windows and larger text.

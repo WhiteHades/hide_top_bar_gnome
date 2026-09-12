@@ -1,6 +1,6 @@
 # Attribution and license
 
-I forked **Hide Top Bar** from
+This fork is based on **Hide Top Bar** from
 https://github.com/tuxor1337/hidetopbar at commit
 aa7d51e (full revision recorded in Git history).
 
