@@ -4,7 +4,15 @@ Hide GNOME's top bar until you need it. Move the pointer to the top edge to reve
 it, then move away to hide it. The bar stays visible while you use its menus,
 including over fullscreen apps.
 
-Supports GNOME 50. Tested on Fedora 44 with GNOME 50.4.
+Current release: **0.2**. Supports GNOME 50, tested on Fedora 44 with GNOME 50.4.
+
+## Why this fork exists
+
+The original version we started from flickered during hover on GNOME 50 and
+cropped the settings window. This fork fixes those problems with a cancellable
+hide delay, animation reversals that preserve the panel's position, fullscreen
+reveal fixes, and settings that wrap and scroll. It also cleans up timers and
+window listeners, with tests for hover, menus, monitor changes, and larger text.
 
 ## Install
 
@@ -24,7 +32,7 @@ bash scripts/install.sh
 ```
 
 Log out and back in to load it. The installer enables this fork, disables the
-original Hide Top Bar, and backs up any previous version of this fork.
+original Hide Top Bar, and replaces the installed fork without creating a backup.
 
 ## Use
 
@@ -47,10 +55,10 @@ bash scripts/install.sh
 ```
 
 Log out and back in afterward. See [maintenance and recovery](MAINTENANCE.md)
-for backups, troubleshooting, and developer tests, or [changes](CHANGELOG.md)
+for older releases, troubleshooting, and developer tests, or [changes](CHANGELOG.md)
 for the version history.
 
-The GNOME Extensions listing is pending desktop testing and approval.
-[Publication checklist](PUBLISHING.md).
+Download the package from [GitHub Releases](https://github.com/WhiteHades/hide_top_bar_gnome/releases).
+GNOME Extensions submission is in progress. [Publication status](PUBLISHING.md).
 
 Based on [Hide Top Bar](https://github.com/tuxor1337/hidetopbar) by Thomas Vogt, Mathieu Lutfy, Philip Witte, and contributors. [Credits and GPL license](ATTRIBUTION.md).

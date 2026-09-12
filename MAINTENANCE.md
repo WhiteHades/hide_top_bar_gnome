@@ -56,7 +56,15 @@ is copied into the temporary test installation only and never ships in the ZIP.
 
 ## Install and test on the desktop
 
-Increment `version` in `metadata.json` for an update. Run the checks, then install:
+The current release is 0.2. Set `version-name` in `metadata.json` to the public
+release label and use the same label in the changelog and Git tag, such as `v0.2`.
+Use patch releases for fixes and minor releases for new features while developing
+before 1.0. Do not change the release label for documentation-only commits.
+
+Leave `version` out of the source metadata. GNOME Extensions assigns that separate
+whole-number submission counter. See the [GNOME metadata format](https://gjs.guide/extensions/overview/anatomy.html#version-name).
+
+Run the checks, then install:
 
 ```bash
 bash scripts/install.sh
@@ -76,16 +84,14 @@ copy installed on another computer.
 
 ## Restore the previous version
 
-The installer saves the existing fork under
-`~/.local/state/hide-top-bar/backups/`. It prints the exact directory. To restore
-one of those ZIP files:
+The installer replaces the installed fork without creating a backup. To restore
+an older release, download its ZIP from GitHub Releases and pass its path:
 
 ```bash
-bash scripts/rollback.sh /path/to/backup/hide-top-bar@whitehades.github.io.shell-extension.zip
+bash scripts/rollback.sh /path/to/hide-top-bar@whitehades.github.io.shell-extension.zip
 ```
 
-Log out and in afterward. Your current preferences stay unchanged. Backups remain
-until you remove them. If you set `XDG_STATE_HOME`, backups use that directory.
+Log out and in afterward. Your current preferences stay unchanged.
 
 To switch back to the original extension, if it is still installed:
 
@@ -115,5 +121,5 @@ mean the locally installed extension failed to load.
 
 ## Publication
 
-Follow [PUBLISHING.md](PUBLISHING.md). Desktop testing and WhiteHades's approval
-come before a GNOME Extensions submission. Keep the same UUID for future releases.
+Follow [PUBLISHING.md](PUBLISHING.md). Complete the desktop checks and obtain the maintainer's publication approval
+before submitting another release. Keep the same UUID for future releases.

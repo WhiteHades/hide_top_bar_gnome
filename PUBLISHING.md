@@ -1,6 +1,7 @@
 # GNOME Extensions submission plan
 
-Status: **not submitted**. WhiteHades must test and approve this fork first.
+Release **0.2** is approved for submission by WhiteHades. Upload is pending a
+signed-in GNOME Extensions account. Public availability requires GNOME review.
 
 ## Acceptance test on the actual desktop
 
@@ -44,7 +45,8 @@ installation scripts, tests, credentials, firmware, or Git history.
 
 ## Updates after approval
 
-Keep the same UUID. Increment the local version, run the tests, install locally,
+Keep the same UUID. Update `version-name`, run the tests, install locally,
 complete the acceptance checks, then upload the new ZIP to the existing GNOME
-Extensions listing. Website version numbering may be assigned by the service.
+Extensions listing. The website assigns its own integer `version`; keep the public
+release label, currently `0.2`, in `version-name`.
 GitHub pushes alone do not update either the desktop installation or the GNOME listing.

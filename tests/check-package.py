@@ -1,6 +1,6 @@
 """Validate the distributable, including keeping test instrumentation out of it."""
 import json
-from pathlib import PurePosixPath
+from pathlib import Path, PurePosixPath
 import xml.etree.ElementTree as ET
 from zipfile import ZipFile
 
@@ -23,7 +23,9 @@ with ZipFile(f'dist/{UUID}.shell-extension.zip') as archive:
     assert metadata['uuid'] == UUID
     assert metadata['name'] == 'Hide Top Bar (WhiteHades)'
     assert metadata['url'] == 'https://github.com/WhiteHades/hide_top_bar_gnome'
-    assert isinstance(metadata['version'], int) and metadata['version'] > 0
+    assert metadata['version-name'] == '0.2'
+    assert 'version' not in metadata, 'Let GNOME Extensions assign its submission counter'
+    assert Path('CHANGELOG.md').read_text().splitlines()[2] == '## 0.2'
     assert metadata['shell-version'], 'Declare tested Shell versions'
     schema = ET.fromstring(archive.read('schemas/org.gnome.shell.extensions.hidetopbar.gschema.xml'))
     assert schema.find('schema').get('id') == metadata['settings-schema']
