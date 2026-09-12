@@ -83,12 +83,13 @@ export async function run(manager) {
                 await until(() => panel.visible && panel.get_paint_visibility() &&
                     !manager._animationActive && Math.abs(panelY() - manager._base_y) < 0.5,
                 `${context}: real virtual-pointer pressure barrier reveals the panel`);
+                assert(manager._unredirectInhibited, `${context}: visible panel must inhibit scanout`);
                 virtualPointer.notify_absolute_motion(GLib.get_monotonic_time(), x,
                     Math.round(manager._base_y + panel.height / 2));
                 const end = GLib.get_monotonic_time() + 350000;
                 while (GLib.get_monotonic_time() < end) {
                     assert(panel.visible && panel.get_paint_visibility() &&
-                        Math.abs(panelY() - manager._base_y) < 0.5,
+                        Math.abs(panelY() - manager._base_y) < 0.5 && manager._unredirectInhibited,
                     `${context}: native hover did not hold the complete panel visible`);
                     await delay(20);
                 }
@@ -106,6 +107,8 @@ export async function run(manager) {
                 await delay(250);
                 assert(!panel.visible && !manager._targetVisible,
                     `${context}: panel appeared again after native exit`);
+                assert(!manager._unredirectInhibited,
+                    `${context}: hidden panel retained scanout inhibition`);
                 checks.push(`native edge pressure, complete hover visibility and exit: ${context}`);
             };
             manager._settings.set_int('pressure-threshold', 0);
@@ -210,10 +213,10 @@ export async function run(manager) {
                 Math.round(manager._base_y + panel.height + 120), 0];
         };
         const visible = () => panel.visible && Math.abs(panelY() - manager._base_y) < 0.5 &&
-            manager._targetVisible === true && !manager._animationActive;
+            manager._targetVisible === true && !manager._animationActive && manager._unredirectInhibited;
         const hidden = () => !panel.visible &&
             panelY() <= manager._base_y - panel.height + 0.5 &&
-            manager._targetVisible === false && !manager._animationActive;
+            manager._targetVisible === false && !manager._animationActive && !manager._unredirectInhibited;
         const hover = () => manager._handlePointer(pointer[0], pointer[1]);
         const stableVisible = async (milliseconds, label) => {
             const end = GLib.get_monotonic_time() + milliseconds * 1000;
@@ -253,6 +256,7 @@ export async function run(manager) {
         await until(() => panelY() < manager._base_y - 0.5 &&
             panelY() > manager._base_y - panel.height + 0.5,
         'actual intermediate Clutter hide-animation frame');
+        assert(manager._unredirectInhibited, 'hide animation released scanout inhibition before completion');
         inside();
         hover();
         await until(visible, 'reentry reverses the real hide animation');
@@ -298,6 +302,8 @@ export async function run(manager) {
         manager.show(1, 'mouse-enter');
         await until(() => manager._animationActive && panelY() > manager._base_y - panel.height + 0.5 &&
             panelY() < manager._base_y - 0.5, 'real show animation active before disable');
+        assert(manager._unredirectInhibited, 'show animation did not own scanout inhibition');
+        checks.push('compositor inhibition owned while visible and animating, released after complete hide');
         record('result', id, {ok: true, id, checks, pendingAnimation: true});
     } catch (error) {
         record('result', id, {ok: false, id, checks, error: `${error.message}\n${error.stack}`});
@@ -320,6 +326,7 @@ export async function onDisable(manager) {
         assert(!manager._animationActive, 'animation state survived disable');
         assert(!manager._pointerListener, 'pointer listener survived disable');
         assert(!manager._hideTimeoutId, 'pending hide survived disable');
+        assert(!manager._unredirectInhibited, 'compositor inhibition survived disable');
         assert(!panel.get_transition('y'), 'panel y transition survived disable');
         assert(!panel.get_transition('translation-y'), 'panel translation transition survived disable');
         const restored = () => panel.visible && Math.abs(panelY() - manager._base_y) < 0.5;

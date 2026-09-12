@@ -61,6 +61,7 @@ export class PanelVisibilityManager {
         this._hideTimeoutId = 0;
         this._shortcutTimeout = null;
         this._suppressedHotCorner = null;
+        this._unredirectInhibited = false;
 
         this._desktopIconsUsableArea = (
             new DesktopIconsIntegration.DesktopIconsUsableAreaClass(extensionUuid)
@@ -100,6 +101,10 @@ export class PanelVisibilityManager {
         this._bindTimeoutId = GLib.timeout_add(
             GLib.PRIORITY_DEFAULT, 100, this._bindUIChanges.bind(this),
         );
+        // Acquire after setup succeeds, before returning to the frame loop.
+        // Native animations only inhibit scanout until their final frame;
+        // a full-monitor app can then cover the still-visible panel.
+        this._inhibitUnredirect();
     }
 
     hide(animationTime, trigger) {
@@ -135,6 +140,7 @@ export class PanelVisibilityManager {
                     PanelBox.hide();
                 }
                 this._updateHotCorner(true);
+                this._restoreUnredirect();
             }
         });
     }
@@ -158,6 +164,8 @@ export class PanelVisibilityManager {
             this._animationActive = false;
         }
 
+        if (trigger !== "destroy")
+            this._inhibitUnredirect();
         this._updateHotCorner(false);
         PanelBox.show();
         if(trigger == "destroy"
@@ -183,6 +191,18 @@ export class PanelVisibilityManager {
                 }
             });
         }
+    }
+
+    _inhibitUnredirect() {
+        if (this._unredirectInhibited) return;
+        global.compositor.disable_unredirect();
+        this._unredirectInhibited = true;
+    }
+
+    _restoreUnredirect() {
+        if (!this._unredirectInhibited) return;
+        global.compositor.enable_unredirect();
+        this._unredirectInhibited = false;
     }
 
     _isHovering(x, y) {
@@ -641,6 +661,7 @@ export class PanelVisibilityManager {
             affectsStruts: true,
             trackFullscreen: true
         });
+        this._restoreUnredirect();
         this._desktopIconsUsableArea.destroy();
         this._desktopIconsUsableArea = null;
     }

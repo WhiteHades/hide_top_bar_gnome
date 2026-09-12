@@ -9,6 +9,8 @@ let timers;
 let watches;
 let animations;
 let transition;
+let unredirectCount;
+let scanoutEvents;
 const GLib = {
     PRIORITY_DEFAULT: 0,
     SOURCE_REMOVE: false,
@@ -29,6 +31,7 @@ const panel = {
         transition = null;
     },
     ease(params) {
+        scanoutEvents.push({action: 'ease', count: unredirectCount});
         animations++;
         if (!params.duration) {
             this.translation_y = params.translation_y;
@@ -45,7 +48,10 @@ const panel = {
         transition = pending;
     },
     hide() { this.visible = false; },
-    show() { this.visible = true; },
+    show() {
+        scanoutEvents.push({action: 'show', count: unredirectCount});
+        this.visible = true;
+    },
 };
 function currentTranslation() {
     if (!transition) return panel.translation_y;
@@ -84,19 +90,38 @@ const Manager = new Function('Main', 'Config', 'Shell', 'Convenience', 'Clutter'
         connect(_signal, callback) { this.trigger = callback; }
         addBarrier() {}
     }}, {Barrier: class {}, BarrierDirection: {POSITIVE_Y: 1}});
-globalThis.global = {get_pointer: () => pointer};
-function fixture() {
+globalThis.global = {
+    get_pointer: () => pointer,
+    compositor: {
+        disable_unredirect() {
+            unredirectCount++;
+            scanoutEvents.push({action: 'inhibit', count: unredirectCount});
+        },
+        enable_unredirect() {
+            assert(unredirectCount > 0, 'Compositor inhibition counter underflow');
+            unredirectCount--;
+            scanoutEvents.push({action: 'release', count: unredirectCount});
+        },
+    },
+};
+function fixture(otherOwners = 0) {
     now = 0; timers = new Map(); watches = new Set(); animations = 0; transition = null;
+    unredirectCount = otherOwners; scanoutEvents = [];
     pointer = [50, 210];
     Object.assign(panel, {x: 0, y: 200, translation_y: 0, width: 1920, height: 32, visible: true});
     Main.layoutManager.hotCorners = [];
     Main.layoutManager.primaryIndex = 0;
+    Main.layoutManager.addChrome = (_actor, options) => {
+        if (options.affectsStruts && options.trackFullscreen)
+            scanoutEvents.push({action: 'native-chrome', count: unredirectCount});
+    };
     Main.overview.visible = false;
     Main.panel.menuManager.activeMenu = null;
     const m = Object.create(Manager.prototype);
     Object.assign(m, {
         _base_y: 200, _animationSerial: 0, _animationActive: false,
         _targetVisible: null, _hideTimeoutId: 0, _destroyed: false,
+        _unredirectInhibited: false,
         _settings: {get_boolean: () => false, get_double: () => 0.2},
         _staticBox: {init_rect(x, y, width, height) {
             Object.assign(this, {x1: x, x2: x + width, y1: y, y2: y + height});
@@ -112,6 +137,9 @@ function fixture() {
             _removeWatch(watch) { watches.delete(watch); },
         },
     });
+    // Production acquires ownership at the end of its constructor before the
+    // first frame; this fixture bypasses that constructor.
+    m._inhibitUnredirect();
     m._updateStaticBox();
     return m;
 }
@@ -314,6 +342,84 @@ advance(300);
 assert(!panel.visible && m._animationSerial === hidingSerial,
     'A stale edge hit cannot reverse an in-progress hide');
 
+m = fixture(2);
+assert(unredirectCount === 3 && m._unredirectInhibited,
+    'The initial visible panel owns exactly one inhibition beside other owners');
+m.hide(0.2, 'initial-hide');
+assert(unredirectCount === 3 && scanoutEvents.at(-1).action === 'ease' &&
+    scanoutEvents.at(-1).count === 3, 'Initial hide animation remains composited');
+advance(199);
+assert(unredirectCount === 3, 'Inhibition must survive the entire hide animation');
+advance(1);
+assert(unredirectCount === 2 && !m._unredirectInhibited,
+    'Completed hide releases only the extension\'s inhibition');
+scanoutEvents = [];
+m.show(0, 'mouse-enter');
+assert(unredirectCount === 3 && m._unredirectInhibited && !m._animationActive,
+    'A settled zero-duration reveal keeps the panel composited');
+assert(scanoutEvents[0].action === 'inhibit' &&
+    scanoutEvents.find(event => event.action === 'show')?.count === 3,
+    'Composition is inhibited before the panel becomes visible');
+m.show(0.2, 'mouse-enter');
+m.show(0, 'mouse-enter');
+assert(unredirectCount === 3 && scanoutEvents.filter(event => event.action === 'inhibit').length === 1,
+    'Duplicate reveal requests cannot acquire additional inhibition');
+m.hide(0.2, 'test-hide');
+advance(70);
+const staleHide = transition.onComplete;
+move(m, 50, 210);
+staleHide();
+assert(unredirectCount === 3 && m._unredirectInhibited,
+    'Reversal and a stale hide completion cannot release the active panel\'s inhibition');
+advance(200);
+assert(unredirectCount === 3, 'A settled reversed reveal remains composited');
+global.compositor.disable_unredirect(); // Another owner starts while the panel is visible.
+move(m, 50, 270);
+advance(350);
+assert(unredirectCount === 3 && !m._unredirectInhibited,
+    'Hiding preserves inhibition acquired independently while the panel was visible');
+global.compositor.enable_unredirect();
+m.hide(0, 'already-hidden');
+m.destroy();
+assert(unredirectCount === 2,
+    'Repeated hide and destruction of a hidden panel leave other owners unchanged');
+
+m = fixture(2);
+m._settings.get_boolean = key => key === 'keep-round-corners';
+m.hide(0.2, 'keep-corners');
+advance(200);
+assert(panel.visible && panel.translation_y === -panel.height &&
+    !m._unredirectInhibited && unredirectCount === 2,
+    'A retained but fully offscreen actor releases scanout inhibition');
+m.destroy();
+assert(unredirectCount === 2, 'Destroying an offscreen retained actor releases nothing twice');
+
+for (const phase of ['hidden', 'revealing', 'visible', 'hiding']) {
+    m = fixture(2);
+    m.hide(0, 'initial-hide');
+    if (phase !== 'hidden') {
+        m.show(phase === 'revealing' ? 0.2 : 0, 'mouse-enter');
+        if (phase === 'revealing')
+            advance(50);
+        if (phase === 'hiding') {
+            m.hide(0.2, 'test-hide');
+            advance(50);
+        }
+    }
+    const staleCompletion = transition?.onComplete;
+    scanoutEvents = [];
+    m.destroy();
+    const releaseIndex = scanoutEvents.findIndex(event => event.action === 'release');
+    const nativeIndex = scanoutEvents.findIndex(event => event.action === 'native-chrome');
+    assert(nativeIndex >= 0 && (phase === 'hidden' ? releaseIndex === -1 : releaseIndex > nativeIndex),
+        `${phase}: destroy must restore native chrome before releasing its inhibition`);
+    staleCompletion?.();
+    m.destroy();
+    advance(500);
+    assert(unredirectCount === 2 && !m._unredirectInhibited && panel.visible && panel.translation_y === 0,
+        `${phase}: teardown and obsolete completion must preserve other owners and restore the panel`);
+}
+
 assert(code.includes('affectsStruts: false,\n            trackFullscreen: false'),
     'Shell fullscreen chrome must not compete with reveal');
 assert((code.match(/new Convenience.GlobalSignalsHandler/g) || []).length === 1,
@@ -323,4 +429,4 @@ for (const name of ['extension.js', 'convenience.js', 'intellihide.js', 'desktop
         .replace(/export default class/g, 'class').replace(/export (class|const|function)/g, '$1');
     new Function(source.replaceAll('import.meta.url', '"file:///test"'));
 }
-print('PASS: asynchronous hover/leave/reentry, duplicate pressure, animation reversal, menus, geometry, overview, teardown, fullscreen tracking, JS parsing');
+print('PASS: asynchronous hover/leave/reentry, duplicate pressure, animation reversal, menus, geometry, overview, teardown, fullscreen tracking, scanout ownership, JS parsing');

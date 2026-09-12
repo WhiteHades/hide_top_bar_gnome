@@ -24,6 +24,8 @@ as enabled and the original Hide Top Bar as disabled.
 - Turn the system hot-corner switch off and on, then repeat.
 - Test ChatGPT with a maximized window and true fullscreen, including slow pointer
   exit and fast re-entry at several positions along the top edge.
+- Repeat with the slide duration at zero. Full-monitor apps must not cover the
+  bar while the pointer is held over it. Restore the preferred duration afterward.
 - Dash to Dock still behaves correctly.
 - Disable and re-enable: native panel is restored while disabled; no duplicate callbacks.
 - If available, test monitor hotplug, a different primary display, and scaling changes.

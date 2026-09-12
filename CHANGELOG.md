@@ -2,6 +2,11 @@
 
 ## 0.2.1
 
+- Keep GNOME compositing the panel until it is fully hidden. This addresses bars
+  that disappear over accelerated maximized or fullscreen apps after the reveal
+  animation, then reappear during the hide animation.
+- Balance compositor holds across animation reversals, disabled animations, and
+  teardown without releasing holds owned by GNOME or other extensions.
 - Keep native Activities corner detection active while the bar slides.
 - Animate the visual offset without rebuilding GNOME corner barriers each frame.
 - Respect the system hot-corner switch and restore the right corner after monitor changes.

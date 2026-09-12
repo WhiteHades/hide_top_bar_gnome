@@ -41,15 +41,16 @@ check starts a separate GNOME compositor. Neither check controls the live deskto
 Both print the directory containing diagnostic files.
 
 The regression tests cover pointer timing, interrupted animations, open menus,
-Intellihide, and callback cleanup. The preferences test checks every page at
-360 and 720 pixels with three text sizes, plus settings and shortcut editing.
+compositor hold ownership, Intellihide, and callback cleanup. The preferences test
+checks every page at 360 and 720 pixels with three text sizes, plus settings and shortcut editing.
 The native runtime test uses virtual pointer input over normal, maximized, and
 fullscreen GTK windows on Wayland and XWayland, at two edge-pressure thresholds.
 It checks reveal, steady hover, exit, stale input, menus, native hot-corner
 activation during animation, and teardown across four activation rounds.
 
-A private compositor does not reproduce every display driver or interaction with
-other installed extensions. Keep the desktop checks below before publication.
+A private compositor does not exercise hardware direct scanout or reproduce every
+display driver or interaction with other installed extensions. Keep the desktop
+checks below before publication.
 
 GitHub Actions runs the regression, preferences, and package checks. Run the native
 runtime check on each GNOME major version you intend to support. Its test driver
@@ -82,6 +83,14 @@ Verify top-edge hover and exit with normal, maximized, and fullscreen windows.
 Try rapid pointer movement, calendar and Quick Settings menus, Activities,
 Dash to Dock, and your display scaling. The complete checklist is in
 [PUBLISHING.md](PUBLISHING.md).
+
+Also test with the slide duration set to zero, then restore your preferred
+duration. A full-monitor app must not cover the bar after its animation ends.
+The extension holds one compositor inhibition while the panel is visible and
+releases it once hidden. This follows the approach used by
+[Dash to Dock for the same rendering problem](https://github.com/micheleg/dash-to-dock/pull/2149).
+Keep that hold separate from GNOME's temporary animation holds; never release
+another extension's hold or leave ours active after disabling the extension.
 
 After review, commit and push the change. GitHub pushes alone do not update the
 copy installed on another computer.
