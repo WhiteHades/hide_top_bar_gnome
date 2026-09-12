@@ -1,12 +1,13 @@
 # GNOME Extensions submission plan
 
-Version **0.2.1** with the compositor fix is installed locally and needs a new
-login to load. WhiteHades has authorized publication. Submission is pending a
-desktop check that full-monitor apps no longer cover the revealed bar. Regression,
-lifecycle, package, and 24 preferences-layout checks pass. Four private GNOME
-activation rounds pass 22 checks each, followed by clean teardown. The Shexli
-submission checker reports no errors or warnings. Public availability requires
-GNOME review.
+Version **0.2.1** with the compositor fix is installed locally. On 13 September
+2026, WhiteHades confirmed that the reported fullscreen hover problem was resolved
+after loading this build. Publication is authorized and release preparation is
+complete; the GNOME upload still requires acceptance of the site's submission
+terms. Regression, lifecycle, package, and 24 preferences-layout checks pass.
+Four private GNOME activation rounds pass 22 checks each, followed by clean
+teardown. The Shexli submission checker reports no errors or warnings. Public
+availability requires GNOME review.
 
 ## Acceptance test on the actual desktop
 
