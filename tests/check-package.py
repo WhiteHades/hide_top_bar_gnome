@@ -27,5 +27,5 @@ with ZipFile(f'dist/{UUID}.shell-extension.zip') as archive:
     assert metadata['shell-version'], 'Declare tested Shell versions'
     schema = ET.fromstring(archive.read('schemas/org.gnome.shell.extensions.hidetopbar.gschema.xml'))
     assert schema.find('schema').get('id') == metadata['settings-schema']
-    assert b'runRuntimeTests' not in archive.read('extension.js'), 'Test driver leaked into package'
+    assert b'__runtimeDriver.js' not in archive.read('extension.js'), 'Test driver leaked into package'
 print('PASS: package metadata, settings schema, attribution, and runtime-only contents')
