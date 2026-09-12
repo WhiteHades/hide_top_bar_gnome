@@ -62,7 +62,8 @@ Log out and back in afterward. See [maintenance and recovery](MAINTENANCE.md)
 for older releases, troubleshooting, and developer tests, or [changes](CHANGELOG.md)
 for the version history.
 
-Release packages appear under [GitHub Releases](https://github.com/WhiteHades/hide_top_bar_gnome/releases).
-GNOME Extensions submission is in progress. [Publication status](PUBLISHING.md).
+Download **0.2.1** from [GitHub Releases](https://github.com/WhiteHades/hide_top_bar_gnome/releases/tag/v0.2.1).
+The [GNOME Extensions listing](https://extensions.gnome.org/extension/10941/hide-top-bar-whitehades/)
+is awaiting review. [Publication status](PUBLISHING.md).
 
 Based on [Hide Top Bar](https://github.com/tuxor1337/hidetopbar) by Thomas Vogt, Mathieu Lutfy, Philip Witte, and contributors. [Credits and GPL license](ATTRIBUTION.md).

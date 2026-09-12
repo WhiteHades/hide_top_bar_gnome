@@ -129,7 +129,7 @@ journalctl --user -b --no-pager _COMM=gnome-shell | tail -n 100
 ```
 
 Review logs before sharing them. The GNOME update service may report "Not Found"
-for this UUID until the fork has a GNOME Extensions listing. That lookup does not
+for this UUID until the fork has an approved GNOME Extensions release. That lookup does not
 mean the locally installed extension failed to load.
 
 ## Publication

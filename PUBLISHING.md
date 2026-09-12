@@ -1,8 +1,12 @@
-# GNOME Extensions submission plan
+# Publishing
 
-Version **0.2.1** is ready to publish. It fixes the bar disappearing over fullscreen
-apps after its animation ends. The fix has passed desktop testing on Fedora 44
-with GNOME 50.4.
+Version **0.2.1** is [published on GitHub](https://github.com/WhiteHades/hide_top_bar_gnome/releases/tag/v0.2.1)
+and installed locally. It fixes the bar disappearing over fullscreen apps after
+its animation ends. The fix has passed desktop testing on Fedora 44 with GNOME 50.4.
+
+The [GNOME Extensions submission](https://extensions.gnome.org/extension/10941/hide-top-bar-whitehades/)
+is **awaiting review**. [Review 74977](https://extensions.gnome.org/review/74977)
+currently lists version 0.2.1 as unreviewed. GNOME will email the review result.
 
 The automated tests passed, including 24 settings layouts and four GNOME test
 sessions with 22 checks each. The extension also shut down cleanly after every
@@ -46,7 +50,7 @@ and exact steps for any failure. Do not claim every issue is fixed based only on
    interacts with other extensions and remains subject to reviewer discretion.
 4. Run all checks in [MAINTENANCE.md](MAINTENANCE.md#test-and-package).
 5. Run `bash scripts/build.sh` and review the contents of the ZIP under `dist/`.
-6. Capture a screenshot showing the fork and accurately describe its differences.
+6. Describe the issue and fix in plain English. A screenshot can show the settings or panel.
 7. Sign in to https://extensions.gnome.org/ and upload the ZIP via its submission flow.
 8. Wait for review; address reviewer feedback in this GitHub repository. Acceptance
    and publishing time are controlled by GNOME reviewers, not this project.
