@@ -45,10 +45,14 @@ export class PanelVisibilityManager {
 
     constructor(settings, monitorIndex) {
         this._monitorIndex = monitorIndex;
-        this._base_y = PanelBox.y;
+        this._base_y = Main.layoutManager.primaryMonitor?.y ?? 0;
         this._settings = settings;
         this._preventHide = false;
         this._showInOverview = true;
+        this._destroyed = false;
+        this._targetVisible = null;
+        this._allocationSignal = 0;
+        this._savedSearchStyle = _searchEntryBin?.style ?? null;
         this._intellihideBlock = false;
         this._staticBox = new Clutter.ActorBox();
         this._animationActive = false;
@@ -60,7 +64,7 @@ export class PanelVisibilityManager {
         Main.layoutManager.removeChrome(PanelBox);
         Main.layoutManager.addChrome(PanelBox, {
             affectsStruts: false,
-            trackFullscreen: true
+            trackFullscreen: false
         });
 
         // We lost the original notification's position because of
@@ -69,7 +73,7 @@ export class PanelVisibilityManager {
         this._oldEase = MessageTray._bannerBin.ease;
         MessageTray._bannerBin.ease = (
             function(params) {
-                if (params.hasOwnProperty("y") && PanelBox.y >= 0) {
+                if (params.hasOwnProperty("y") && PanelBox.visible && PanelBox.y >= this._base_y) {
                     params.y += PanelBox.height;
                 }
                 this._oldEase.apply(MessageTray._bannerBin, arguments);
@@ -96,13 +100,15 @@ export class PanelVisibilityManager {
 
     hide(animationTime, trigger) {
         DEBUG("hide(" + trigger + ")");
-        if(this._preventHide) return;
+        if(this._destroyed || this._preventHide) return;
+        if (this._targetVisible === false) return;
 
         let anchor_y = PanelBox.get_pivot_point()[1],
             delta_y = -PanelBox.height;
         if(anchor_y < 0) delta_y = -delta_y;
         let mouse = global.get_pointer();
         if(trigger == "mouse-left" && this._isHovering(...mouse)) return;
+        this._targetVisible = false;
 
         if(this._pointerListener) {
             this._pointerWatcher._removeWatch(this._pointerListener);
@@ -131,6 +137,9 @@ export class PanelVisibilityManager {
 
     show(animationTime, trigger) {
         DEBUG("show(" + trigger + ")");
+        if (this._destroyed) return;
+        if (trigger !== "destroy" && this._targetVisible === true) return;
+        this._targetVisible = true;
         if(trigger == "mouse-enter"
            && this._settings.get_boolean('mouse-triggers-overview')) {
             Main.overview.show();
@@ -175,7 +184,7 @@ export class PanelVisibilityManager {
                         // pointer so we know when it leaves the panel.
                         this._pointerListener =
                             this._pointerWatcher.addWatch
-                                (10, this._handlePointer.bind(this));
+                                (50, this._handlePointer.bind(this));
                     }
                 }
             });
@@ -204,6 +213,9 @@ export class PanelVisibilityManager {
                     "mouse-left"
                 );
             } else {
+                if (this._blockerMenu === blocker) return;
+                if (this._blockerMenu && this._menuEvent)
+                    this._blockerMenu.disconnect(this._menuEvent);
                 this._blockerMenu = blocker;
                 this._menuEvent = this._blockerMenu.connect(
                     'open-state-changed',
@@ -287,9 +299,14 @@ export class PanelVisibilityManager {
             this._panelBarrier.destroy();
             this._panelBarrier = null;
         }
+        if (this._panelPressure) {
+            this._panelPressure.destroy();
+            this._panelPressure = null;
+        }
     }
 
     _initPressureBarrier() {
+        if (!Main.layoutManager.primaryMonitor) return;
         this._panelPressure = new Layout.PressureBarrier(
             this._settings.get_int('pressure-threshold'),
             this._settings.get_int('pressure-timeout'),
@@ -333,7 +350,7 @@ export class PanelVisibilityManager {
         DEBUG("_updateStaticBox()");
         let anchor_y = PanelBox.get_pivot_point()[1];
         this._staticBox.init_rect(
-            PanelBox.x, PanelBox.y-anchor_y, PanelBox.width, PanelBox.height
+            PanelBox.x, this._base_y-anchor_y, PanelBox.width, PanelBox.height
         );
         this._intellihide.updateTargetBox(this._staticBox);
         this._desktopIconsUsableArea.resetMargins();
@@ -353,9 +370,7 @@ export class PanelVisibilityManager {
           if(!panel_hidden || this._settings.get_boolean('hot-corner')) {
               HotCorner.setBarrierSize(PanelBox.height);
           } else {
-              GLib.timeout_add(GLib.PRIORITY_DEFAULT, 100, function () {
-                  HotCorner.setBarrierSize(0)
-              });
+              HotCorner.setBarrierSize(0);
           }
         }
     }
@@ -412,7 +427,6 @@ export class PanelVisibilityManager {
     }
 
     _bindUIChanges() {
-        this._signalsHandler = new Convenience.GlobalSignalsHandler();
         this._signalsHandler.add(
             [
                 Main.overview,
@@ -460,9 +474,12 @@ export class PanelVisibilityManager {
                 Main.layoutManager,
                 'monitors-changed',
                 () => {
-                    this._base_y = PanelBox.y;
+                    this._base_y = Main.layoutManager.primaryMonitor?.y ?? 0;
+                    this._monitorIndex = Main.layoutManager.primaryIndex;
+                    this._targetVisible = null;
                     this._updateStaticBox();
                     this._updateSettingsMouseSensitive();
+                    this._updateIntellihideStatus();
                 }
             ],
             [
@@ -480,9 +497,10 @@ export class PanelVisibilityManager {
 
         if (!PanelBox.has_allocation()) {
           // after login, allocating the panel can take a second or two
-          let tmp_handle = PanelBox.connect("notify::allocation", () => {
+          this._allocationSignal = PanelBox.connect("notify::allocation", () => {
             this._updateIntellihideStatus();
-            PanelBox.disconnect(tmp_handle);
+            PanelBox.disconnect(this._allocationSignal);
+            this._allocationSignal = 0;
           });
         } else {
           this._updateIntellihideStatus();
@@ -534,6 +552,17 @@ export class PanelVisibilityManager {
     }
 
     destroy() {
+        if (this._destroyed) return;
+        if (this._shortcutTimeout && this._shortcutTimeout !== true)
+            GLib.source_remove(this._shortcutTimeout);
+        this._shortcutTimeout = null;
+        if (this._allocationSignal)
+            PanelBox.disconnect(this._allocationSignal);
+        this._allocationSignal = 0;
+        if (this._blockerMenu && this._menuEvent)
+            this._blockerMenu.disconnect(this._menuEvent);
+        this._blockerMenu = null;
+        this._menuEvent = null;
         if (this._bindTimeoutId) {
             GLib.source_remove(this._bindTimeoutId);
             this._bindTimeoutId = 0;
@@ -543,11 +572,12 @@ export class PanelVisibilityManager {
         Main.wm.removeKeybinding("shortcut-keybind");
         this._disablePressureBarrier();
         if (_searchEntryBin) {
-          _searchEntryBin.style = null;
+          _searchEntryBin.style = this._savedSearchStyle;
         }
 
         MessageTray._bannerBin.ease = this._oldEase;
         this.show(0, "destroy");
+        this._destroyed = true;
 
         Main.layoutManager.removeChrome(PanelBox);
         Main.layoutManager.addChrome(PanelBox, {

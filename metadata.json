@@ -1,9 +1,12 @@
 {
-  "shell-version": ["45", "46", "47", "48", "49", "50"],
-  "uuid": "hidetopbar@mathieu.bidon.ca",
-  "name": "Hide Top Bar",
-  "settings-schema": "org.gnome.shell.extensions.hidetopbar",
+  "shell-version": [
+    "50"
+  ],
+  "uuid": "hide-top-bar@whitehades.github.io",
+  "name": "Hide Top Bar \u2014 WhiteHades",
+  "settings-schema": "org.gnome.shell.extensions.hidetopbar-whitehades",
   "description": "Hides the top bar, except in overview. However, there is an option to show the panel whenever the mouse pointer approaches the edge of the screen. And if \"intellihide\" is enabled, the panel only hides when a window takes the space.\n\n- Press backspace to remove keyboard shortcut.\n- Log off and on again when there is an error after upgrading.",
-  "url": "https://gitlab.gnome.org/tuxor1337/hidetopbar",
-  "gettext-domain": "hidetopbar@mathieu.bidon.ca"
+  "url": "https://github.com/WhiteHades/hide_top_bar_gnome",
+  "gettext-domain": "hidetopbar@mathieu.bidon.ca",
+  "version": 1
 }

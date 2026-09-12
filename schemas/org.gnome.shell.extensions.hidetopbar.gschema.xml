@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <schemalist>
-  <schema id="org.gnome.shell.extensions.hidetopbar" path="/org/gnome/shell/extensions/hidetopbar/">
+  <schema id="org.gnome.shell.extensions.hidetopbar-whitehades" path="/org/gnome/shell/extensions/hidetopbar-whitehades/">
     <key name="hot-corner" type="b">
       <default>false</default>
       <summary>Keep hot corner sensitive or not</summary>
@@ -10,7 +10,7 @@
       </description>
     </key>
     <key name="mouse-sensitive" type="b">
-      <default>false</default>
+      <default>true</default>
       <summary>Show panel when mouse approaches edge of the screen</summary>
       <description>
         Set to "true" to show panel not only in overview but also when the mouse
@@ -57,7 +57,7 @@
       </description>
     </key>
     <key name="pressure-threshold" type="i">
-      <default>100</default>
+      <default>0</default>
       <summary>Pressure barrier's threshold</summary>
       <description>
         Number of pixels the mouse has to overrun in order to trigger the
@@ -94,7 +94,7 @@
       </description>
     </key>
     <key name="enable-intellihide" type="b">
-      <default>true</default>
+      <default>false</default>
       <summary>Enable intellihide feature</summary>
       <description>
         When enabled, the panel will only hide if a window takes the space.
