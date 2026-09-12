@@ -151,11 +151,10 @@ const receiver = {state: 1, stateObj: {DesktopIconsUsableArea: {
 }}};
 extensionManager.getUuids = () => ['desktop-icons'];
 extensionManager.lookup = () => receiver;
-const Area = new Function('GLib', 'Main', 'ExtensionUtils', 'Extension',
+const Area = new Function('GLib', 'Main', 'ExtensionUtils',
     source('desktopIconsIntegration.js') + '\nreturn DesktopIconsUsableAreaClass;')(
-    GLib, {extensionManager}, {ExtensionState: {ENABLED: 1, ACTIVE: 1}},
-    {lookupByURL: () => ({uuid: 'hide-top-bar@whitehades.github.io'})});
-let area = new Area();
+    GLib, {extensionManager}, {ExtensionState: {ENABLED: 1, ACTIVE: 1}});
+let area = new Area('hide-top-bar@whitehades.github.io');
 area.setMargins(-1, 32, 0, 0, 0);
 area.resetMargins();
 area.setMargins(-1, 40, 0, 0, 0);
@@ -163,7 +162,8 @@ assert(timers.size === 1, 'Margin changes are coalesced');
 const [timerId, pending] = [...timers][0];
 timers.delete(timerId);
 pending.callback();
-assert(received.length === 1 && received[0].margins[-1].top === 40,
+assert(received.length === 1 && received[0].uuid === 'hide-top-bar@whitehades.github.io' &&
+    received[0].margins[-1].top === 40,
     'Pending update sends the latest margins once');
 area.setMargins(-1, 48, 0, 0, 0);
 area.destroy();

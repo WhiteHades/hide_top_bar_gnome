@@ -65,6 +65,9 @@ before 1.0. Do not change the release label for documentation-only commits.
 Leave `version` out of the source metadata. GNOME Extensions assigns that separate
 whole-number submission counter. See the [GNOME metadata format](https://gjs.guide/extensions/overview/anatomy.html#version-name).
 
+The ZIP contains the schema XML. GNOME compiles it during installation. Do not
+add `gschemas.compiled` to packages for the supported GNOME 50 release.
+
 Run the checks, then install:
 
 ```bash

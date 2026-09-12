@@ -44,7 +44,7 @@ const HIDE_DELAY_MS = 150;
 
 export class PanelVisibilityManager {
 
-    constructor(settings, monitorIndex) {
+    constructor(settings, monitorIndex, extensionUuid) {
         this._monitorIndex = monitorIndex;
         this._base_y = Main.layoutManager.primaryMonitor?.y ?? 0;
         this._settings = settings;
@@ -63,7 +63,7 @@ export class PanelVisibilityManager {
         this._suppressedHotCorner = null;
 
         this._desktopIconsUsableArea = (
-            new DesktopIconsIntegration.DesktopIconsUsableAreaClass()
+            new DesktopIconsIntegration.DesktopIconsUsableAreaClass(extensionUuid)
         );
         Main.layoutManager.removeChrome(PanelBox);
         Main.layoutManager.addChrome(PanelBox, {

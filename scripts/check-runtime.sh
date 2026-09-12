@@ -8,7 +8,9 @@ mkdir -p "$root/data/gnome-shell/extensions/hide-top-bar@whitehades.github.io" \
 chmod 700 "$root/runtime"
 python3 - "$root/data/gnome-shell/extensions/hide-top-bar@whitehades.github.io" <<'PYTHON'
 from pathlib import Path
+import os
 import shutil
+import subprocess
 import sys
 import zipfile
 
@@ -17,12 +19,25 @@ with zipfile.ZipFile('dist/hide-top-bar@whitehades.github.io.shell-extension.zip
     assert '__runtimeDriver.js' not in archive.namelist(), 'Test driver must never ship'
     assert 'tests/runtime.js' not in archive.namelist(), 'Test driver must never ship'
     assert 'tests/runtime-window.js' not in archive.namelist(), 'Test client must never ship'
-    archive.extractall(destination)
+    assert 'schemas/gschemas.compiled' not in archive.namelist(), 'Compiled schemas must not ship'
+
+# Exercise the same installer as the local install script, including GNOME's
+# automatic schema compilation, without touching the live user's extension.
+test_root = destination.parents[3]
+install_env = dict(os.environ,
+    XDG_DATA_HOME=str(test_root / 'data'),
+    XDG_CONFIG_HOME=str(test_root / 'config'),
+    XDG_CACHE_HOME=str(test_root / 'cache'),
+    XDG_RUNTIME_DIR=str(test_root / 'runtime'))
+subprocess.run(['gnome-extensions', 'install', '--force',
+    'dist/hide-top-bar@whitehades.github.io.shell-extension.zip'],
+    env=install_env, check=True)
+assert (destination / 'schemas/gschemas.compiled').is_file(), 'Installer did not compile schemas'
 
 # Instrument only the temporary extracted extension, never the checkout or ZIP.
 extension = destination / 'extension.js'
 source = extension.read_text()
-enabled = '            mSettings, monitorIndex,\n        );'
+enabled = '            mSettings, monitorIndex, this.uuid,\n        );'
 disabled = '        mPVManager?.destroy();'
 assert source.count(enabled) == 1 and source.count(disabled) == 1, 'Update test injection anchors'
 source = "import * as RuntimeTests from './__runtimeDriver.js';\n" + source

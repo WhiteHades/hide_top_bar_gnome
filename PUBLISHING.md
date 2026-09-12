@@ -2,7 +2,8 @@
 
 Version **0.2.1** is installed locally for testing. WhiteHades has authorized
 publication. Submission is pending verification of the reported ChatGPT hover
-flicker after loading this update. Public availability requires GNOME review.
+flicker after loading this update. Automated checks and the Shexli submission
+checker pass. Public availability requires GNOME review.
 
 ## Acceptance test on the actual desktop
 

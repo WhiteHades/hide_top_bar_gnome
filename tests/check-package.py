@@ -5,15 +5,17 @@ import xml.etree.ElementTree as ET
 from zipfile import ZipFile
 
 UUID = 'hide-top-bar@whitehades.github.io'
+SCHEMA_ID = 'org.gnome.shell.extensions.hidetopbar-whitehades'
+SCHEMA_PATH = f'schemas/{SCHEMA_ID}.gschema.xml'
 required = {
     'metadata.json', 'extension.js', 'panelVisibilityManager.js', 'intellihide.js',
     'convenience.js', 'desktopIconsIntegration.js', 'prefs.js', 'Settings.ui',
-    'COPYING.txt', 'ATTRIBUTION.md', 'schemas/gschemas.compiled',
-    'schemas/org.gnome.shell.extensions.hidetopbar.gschema.xml',
+    'COPYING.txt', 'ATTRIBUTION.md', SCHEMA_PATH,
 }
 with ZipFile(f'dist/{UUID}.shell-extension.zip') as archive:
     names = archive.namelist()
     assert len(names) == len(set(names)), 'Duplicate archive entries'
+    assert 'schemas/gschemas.compiled' not in names, 'GNOME compiles schemas when installing'
     assert required <= set(names), f'Missing runtime files: {required - set(names)}'
     for name in names:
         path = PurePosixPath(name)
@@ -27,7 +29,7 @@ with ZipFile(f'dist/{UUID}.shell-extension.zip') as archive:
     assert 'version' not in metadata, 'Let GNOME Extensions assign its submission counter'
     assert Path('CHANGELOG.md').read_text().splitlines()[2] == '## 0.2.1'
     assert metadata['shell-version'], 'Declare tested Shell versions'
-    schema = ET.fromstring(archive.read('schemas/org.gnome.shell.extensions.hidetopbar.gschema.xml'))
-    assert schema.find('schema').get('id') == metadata['settings-schema']
+    schema = ET.fromstring(archive.read(SCHEMA_PATH))
+    assert schema.find('schema').get('id') == metadata['settings-schema'] == SCHEMA_ID
     assert b'__runtimeDriver.js' not in archive.read('extension.js'), 'Test driver leaked into package'
 print('PASS: package metadata, settings schema, attribution, and runtime-only contents')

@@ -8,6 +8,8 @@
 - Ignore queued edge hits once the pointer has left the panel area.
 - Test Wayland and XWayland windows, including maximized and fullscreen apps,
   with zero and nonzero edge pressure.
+- Match GNOME's schema naming rules and let the installer compile settings locally.
+- Pass the extension identity directly to desktop-icons integration.
 
 ## 0.2
 

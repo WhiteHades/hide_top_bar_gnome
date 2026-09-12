@@ -40,7 +40,7 @@ export default class HideTopBarExtension extends Extension {
         mSettings = this.getSettings();
         monitorIndex = Main.layoutManager.primaryIndex;
         mPVManager = new PanelVisibilityManager.PanelVisibilityManager(
-            mSettings, monitorIndex,
+            mSettings, monitorIndex, this.uuid,
         );
     }
 
