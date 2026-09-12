@@ -6,15 +6,25 @@ UI_FILES = $(shell echo Settings.ui)
 LOCALES_PO = $(wildcard locale/*/*/*.po)
 LOCALES_MO = $(patsubst %.po,%.mo,$(LOCALES_PO))
 
-.PHONY: distclean clean all all-po
+.PHONY: distclean clean all all-po check check-runtime
 
-all: hidetopbar.zip
+all:
+	bash scripts/build.sh
+
+check: all
+	gjs -m tests/run.js
+	python3 tests/check-package.py
+	bash -n scripts/*.sh
+
+check-runtime:
+	bash scripts/check-runtime.sh
 
 schemas/gschemas.compiled:
 	glib-compile-schemas --strict ./schemas/
 
-hidetopbar.zip: schemas/gschemas.compiled $(LOCALES_MO)
-	zip hidetopbar.zip -r COPYING.txt $(JS_FILES) metadata.json $(LOCALES_MO) schemas Settings.ui
+# Keep the old target working, using the same contents as the documented build.
+hidetopbar.zip: all
+	cp dist/hide-top-bar@whitehades.github.io.shell-extension.zip $@
 
 clean:
 	rm -rf hidetopbar.zip schemas/gschemas.compiled ${LOCALES_MO}

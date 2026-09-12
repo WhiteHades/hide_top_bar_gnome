@@ -8,7 +8,7 @@ python3 - <<'PY'
 from pathlib import Path
 import zipfile
 with zipfile.ZipFile('dist/hide-top-bar@whitehades.github.io.shell-extension.zip','w',zipfile.ZIP_DEFLATED) as z:
- files=list(Path('.').glob('*.js'))+[Path(p) for p in ('metadata.json','COPYING.txt','ATTRIBUTION.md','Settings.ui')]+list(Path('schemas').glob('*'))+list(Path('locale').rglob('*.mo'))
+ files=[Path(p) for p in ('extension.js', 'panelVisibilityManager.js', 'intellihide.js', 'convenience.js', 'desktopIconsIntegration.js', 'prefs.js')]+[Path(p) for p in ('metadata.json','COPYING.txt','ATTRIBUTION.md','Settings.ui')]+list(Path('schemas').glob('*'))+list(Path('locale').rglob('*.mo'))
  for p in files: z.write(p,str(p))
 print('Built dist/hide-top-bar@whitehades.github.io.shell-extension.zip')
 PY
