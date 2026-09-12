@@ -8,12 +8,11 @@ Current version: **0.2.1**. Supports GNOME 50, tested on Fedora 44 with GNOME 50
 
 ## Why this fork exists
 
-The original version we started from flickered during hover on GNOME 50 and
-cropped the settings window. This fork fixes those problems with a cancellable
-hide delay, animation reversals that preserve the panel's position, fullscreen
-reveal fixes, and settings that wrap and scroll. Native hot corners keep working
-during panel animations. Tests cover Wayland and XWayland windows, pointer
-timing, menus, monitor changes, and larger text.
+This fork addresses hover flicker and cropped settings on GNOME 50. It keeps
+GNOME rendering the bar over apps that fill the display, even after the slide
+animation ends. A short hide delay handles brief pointer exits, interrupted
+slides reverse smoothly, and native hot corners keep working during animation.
+Settings wrap and scroll to fit narrow windows and larger text.
 
 ## Install
 

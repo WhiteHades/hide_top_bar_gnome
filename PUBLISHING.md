@@ -1,9 +1,12 @@
 # GNOME Extensions submission plan
 
-Version **0.2.1** is installed locally for testing. WhiteHades has authorized
-publication. Submission is pending verification of the reported ChatGPT hover
-flicker after loading this update. Automated checks and the Shexli submission
-checker pass. Public availability requires GNOME review.
+Version **0.2.1** with the compositor fix is installed locally and needs a new
+login to load. WhiteHades has authorized publication. Submission is pending a
+desktop check that full-monitor apps no longer cover the revealed bar. Regression,
+lifecycle, package, and 24 preferences-layout checks pass. Four private GNOME
+activation rounds pass 22 checks each, followed by clean teardown. The Shexli
+submission checker reports no errors or warnings. Public availability requires
+GNOME review.
 
 ## Acceptance test on the actual desktop
 
